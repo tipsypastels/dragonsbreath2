@@ -1,28 +1,25 @@
-class Script < Struct.new()
-  cattr_accessor :current
-  attr_reader :manager, :parent, :type, :name, :body
+class Script
+  include Allowing, Sourced, Scoped, Builder, Executable
 
-  def initialize(manager, parent, type, name, body)
-    @manager = manager
-    @parent  = parent
-    @type    = type
-    @name    = name
-    @body    = body
+  cattr_accessor :top_level
+  attr_reader :lines, :source, :parent, :output
+  attr_accessor :children
 
-    manager.push(self)
-  end
+  def initialize(lines, source: nil, parent: nil, scope: nil, children: [])
+    @lines    = lines
+    @source   = source
+    @parent   = parent || Script.top_level
+    @scope    = scope  || default_scope
+    @output   = []
+    @children = children
 
-  def create_subscript(type)
-    name = "_"
+    @parent&.children&.push(self)
+    ensure_source
   end
 
   def name
-    body.parameters.first.value
+    source.parameters.name
   end
 
-  def subscripts
-    manager.scripts.detect { |s|
-      s.parent == self
-    }
-  end
+  private
 end

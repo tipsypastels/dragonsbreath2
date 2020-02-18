@@ -5,11 +5,10 @@ class Parser
   end
   
   def parse
-    lines.each_with_index { |line, i|
-      parse_line(line, i)
-    }
-
-    memory.lines
+    lines.each_with_index(&method(:parse_line))
+    Wrappers.wrap_compatible_nodes(memory.lines).tap do
+      Wrappers.reset!
+    end
   end
   
   private

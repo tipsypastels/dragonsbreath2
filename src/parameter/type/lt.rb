@@ -1,7 +1,7 @@
 module Parameter::Type
-  class Eq < BaseComparison
+  class Lt < BaseComparison
     def type_of_goto
-      :eq
+      :lt
     end
   end
 end

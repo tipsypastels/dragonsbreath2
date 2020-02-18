@@ -7,7 +7,7 @@ class Transpiler::Parameters::Expecter
   attr_reader :command, :list
   delegate :each, :zip, :length, to: :list
 
-  def method_missing(name, *types, optional: false, &block)
+  def method_missing(name, *types, optional: false)
     unless types
       raise "Type declaration missing for parameter #{name} in #{command}"
     end
@@ -16,7 +16,6 @@ class Transpiler::Parameters::Expecter
       name: name,
       types: types,
       optional: optional,
-      translation: block,
     }))
   end
 

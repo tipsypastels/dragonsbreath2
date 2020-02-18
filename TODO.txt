@@ -1,0 +1,22 @@
+$egg   = 1
+$zheng = 2
+
+map_scripts MyMap_MapScripts
+  on_load
+    "Hello!"
+
+@local
+script MyScript
+  lock
+    UNSAFE_normalizeplayerpos plane = x, 
+                       to    = 5,
+                       min   = 2,
+                       max   = 8
+    
+    move_and_wait $zheng
+      walk_down
+
+    if set? FLAG_DONE_THIS
+      "Oh, you did this."
+    else
+      "Ok, let's get started."

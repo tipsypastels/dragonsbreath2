@@ -23,6 +23,16 @@ RSpec.describe Parameter::Parser do
     expect('it').to be_param :it
   end
 
+  context 'scopes' do
+    it 'parses global' do
+      expect('(global)').to be_param :scope, :global
+    end
+
+    it 'parses local' do
+      expect('(local)').to be_param :scope, :local
+    end
+  end
+
   context 'numbers' do
     it 'parses floats' do
       expect('3.14').to be_param :number, 3.14
@@ -60,10 +70,26 @@ RSpec.describe Parameter::Parser do
   end
 
   context 'comparisons' do
-    it 'parses eq' do
-      expect('a == b').to be_param :eq, {
-        left: { type: :token, value: 'a' },
-        right: { type: :token, value: 'b' },
+    %i|eq lt gt le ge|.each do |comp|
+      it "parses #{comp}" do
+        expect("a #{comp} b").to be_param comp, {
+          left: { type: :token, value: 'a' },
+          right: { type: :token, value: 'b' },
+        }
+      end
+    end
+
+    it 'parses flags' do
+      %i|flag set|.each do |flag_alias|
+        expect("#{flag_alias}? CONSTANT").to be_param :flag, {
+          check: { type: :constant, value: 'CONSTANT' },
+          inverse: false,
+        }
+      end
+
+      expect('unset? CONSTANT').to be_param :flag, {
+        check: { type: :constant, value: 'CONSTANT' },
+        inverse: true,
       }
     end
   end

@@ -8,7 +8,17 @@ class DbrError < SyntaxError
   end
 
   module Scripts
-    class WrongTopLevel < DbrError; end
+    class WrongTopLevel < DbrError
+      def initialize(command, script)
+        super("Command #{command} cannot be used in script type #{script.class}. Allowed commands are #{script.allowed_commands.to_sentence}")
+      end
+    end
+
+    class NoScriptSource < DbrError
+      def initialize(script)
+        super("Script of type #{script.class} does not allow nil as a source.")
+      end
+    end
   end
 
   module Enforcer
@@ -27,7 +37,7 @@ class DbrError < SyntaxError
 
       class WrongType < DbrError
         def initialize(command, expectation, param)
-          super("Parameter for #{command} #{expectation.name} must be one of #{expectation.types.inspect}, got #{param[:type]}")
+          super("Parameter for #{command} #{expectation.name} must be one of #{expectation.types.inspect}, got #{param.type}")
         end
       end
     end

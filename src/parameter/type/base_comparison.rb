@@ -8,9 +8,10 @@ module Parameter::Type
     end
 
     def to_h
-      hash = super
-      hash[:value] &&= hash[:value].to_h
-      hash
+      super.tap do |hash|
+        hash[:value] &&= hash[:value].to_h
+          .map { |key, value| [key, value.to_h] }.to_h
+      end
     end
 
     def to_engine

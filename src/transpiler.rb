@@ -1,6 +1,11 @@
 class Transpiler
-  def initialize(lines, parent)
+  def self.transpile(*a)
+    new(*a).transpile
+  end
+
+  def initialize(lines, script:, parent: nil)
     @lines  = lines
+    @script = script
     @parent = parent
   end
   
@@ -10,15 +15,20 @@ class Transpiler
 
   private
 
-  attr_reader :lines, :parent
+  attr_reader :lines, :script, :parent
 
   def transpile_line(line)
     builtin = Command[line.command]
 
     if builtin
-      builtin.new(line, parent, self).prepare
+      builtin.new(
+        line, 
+        parent: parent, 
+        script: script || Script.top_level, 
+        transpiler: self,
+      ).prepare
     else
-      line.to_engine
+      script.add_line(line.to_engine)
     end
   end
 end

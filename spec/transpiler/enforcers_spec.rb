@@ -1,8 +1,16 @@
 def create_line(hash)
   OpenStruct.new({
-    parameters: hash.map { |value, type| 
-      { type: type, value: value }
-    },
+    parameters: Parameter::List.new(hash.map { |name, value|
+      type = 
+        case value
+        when String
+          :string
+        when Numeric
+          :number
+        end
+      
+      Parameter::Type.create(type, value)
+    }),
   })
 end
 
@@ -20,8 +28,8 @@ RSpec.describe 'Enforcers' do
       end
 
       line = create_line({
-        world: :string,
-        hello: :string,
+        world: 'world',
+        hello: 'world',
       })
 
       expect {
@@ -43,12 +51,64 @@ RSpec.describe 'Enforcers' do
       end
 
       line = create_line({
-        name: :number,
+        name: 1,
       })
 
       expect {
         command.new(line, nil, nil).enforce
       }.to raise_error(WrongType)
+    end
+
+    it 'works the rest of the time' do
+      command = Class.new(Command) do
+        def expect_params(p)
+          p.name :string
+        end
+      end
+
+      line = create_line({
+        name: 'dakota',
+      })
+
+      expect {
+        command.new(line, nil, nil).enforce
+      }.not_to raise_error
+    end
+  end
+
+  describe 'binding to names' do
+    it 'binds based on position' do
+      command = Class.new(Command) do
+        def expect_params(p)
+          p.name :string
+        end
+      end
+
+      line = create_line({
+        name: 'dakota',
+      })
+
+      command.new(line, nil, nil).enforce
+      expect(line.parameters.name).to eq('dakota')
+    end
+
+    it 'can bind multiple' do
+      command = Class.new(Command) do
+        def expect_params(p)
+          p.hello :string
+          p.world :string
+        end
+      end
+
+      line = create_line({
+        hello: 'hello',
+        world: 'world',
+      })
+      p line.parameters.collect(&:class)
+
+      command.new(line, nil, nil).enforce
+      expect(line.parameters.hello).to eq('hello')
+      expect(line.parameters.world).to eq('world')
     end
   end
 end

@@ -13,16 +13,18 @@ class Transpiler::Parameters::Enforcer
         .new(command, expected, actual)
     end
 
-    expected.zip(actual).each { |(expectation, param)|
+    expected.zip(actual).each_with_index { |(expectation, param), i|
       if !param && !expectation.optional
         raise DbrError::Enforcer::Parameters::Missing
           .new(command, expectation)
       end
 
-      unless param[:type].in?(expectation.types)
+      unless !param || param.type.in?(expectation.types)
         raise DbrError::Enforcer::Parameters::WrongType
           .new(command, expectation, param)
       end
+
+      actual.bind_named_parameter(expectation.name, i)
     }
   end
 end

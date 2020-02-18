@@ -2,7 +2,7 @@ class Parameter::Type::Base
   attr_reader :value
 
   def initialize(value = nil)
-    @value  = transform_value(value)
+    @value = transform_value(value)
   end
 
   def type
@@ -28,12 +28,21 @@ class Parameter::Type::Base
     value.present?
   end
 
+  def ==(other)
+    case other
+    when Parameter::Type::Base
+      super
+    else
+      value == other
+    end
+  end
+
   private
 
   def transform_value(value)
     value
   end
-  
+
   def parse(subvalue)
     Parameter::Parser.new(subvalue).parse
   end

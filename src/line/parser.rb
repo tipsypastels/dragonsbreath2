@@ -1,32 +1,36 @@
 class Line::Parser
   INDENT = '  '
+  COMMENT = '#'
 
   def initialize(text, number, memory)
-    @text   = text
+    @text   = text.gsub(/#{COMMENT}\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$).*$/, '')
     @number = number
     @memory = memory
   end
 
-  # TODO str_comma
   def parse
     return if effectively_blank?
 
     stripped_text = text
       .gsub(/^\s*/, '')
       .gsub(/\r$/, '')
+
+    if stripped_text.match?(/^".*"$/)
+      stripped_text = "say #{text}"
+    end
     
     command = stripped_text.split(' ').first
     parameters = stripped_text
-      .slice((command.length + 1)..-1)
+       .slice((command.length + 1)..-1)
       &.split(/\s*,\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/)
       &.map(&method(:parse_parameter))
-      &.compact
+      &.yield_self(&Parameter::List.method(:new))
 
     line = Line.new(
       number, 
       command, 
       parameters, 
-      indent
+      indent,
     )
 
     memory.push(line)

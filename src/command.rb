@@ -1,13 +1,7 @@
 class Command
-  LIST = {
-    lock: Lock
-  }
-  
-  def self.[](name)
-    LIST[name.to_sym]
-  end
+  include Table, Enforcing, Hierarchy, Builder
 
-  attr_reader :line, :parent, :transpiler, :builder
+  attr_reader :line, :parent, :transpiler, :script
   delegate :command, 
            :parameters,
            :children,
@@ -15,28 +9,17 @@ class Command
            :children?,
            to: :line
 
-  def initialize(line, parent, transpiler)
+  def initialize(line, parent:, transpiler:, script:)
     @line = line
     @parent = parent
     @transpiler = transpiler
-    @builder = Transpiler::Builder.new(self)
+    @script = script
   end
 
   def prepare
     enforce
-    render || builder
+    render.tap { |res| add_line(res) if res.is_a?(String) }
   end  
-
-  def enforce
-    expecter = Transpiler::Parameters::Expecter
-      .new(self)
-
-    expect_params(expecter)
-    expecter.enforce(parameters)
-  end
-
-  def enforce_params(p)
-  end
 
   def yield_children
     Transpiler.new(children, self).transpile
