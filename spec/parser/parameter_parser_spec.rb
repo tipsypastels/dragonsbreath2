@@ -1,12 +1,9 @@
-RSpec::Matchers.define :be_param do |type, value = nil|
+RSpec::Matchers.define :be_param do |type, value = nil, vars = nil|
   expected = { type: type }
   expected[:value] = value if value
 
   match do |actual|
-    @actual_result = Parameter::Parser.new(actual)
-      .parse
-      .to_h
-
+    @actual_result = parse(actual, vars).to_h
     @actual_result.to_s == expected.to_s
   end
 
@@ -16,6 +13,10 @@ RSpec::Matchers.define :be_param do |type, value = nil|
       got:      #{@actual_result}
     MESSAGE
   end
+end
+
+def parse(value, vars = nil)
+  Parameter::Parser.new(value, vars).parse
 end
 
 RSpec.describe Parameter::Parser do
@@ -79,18 +80,42 @@ RSpec.describe Parameter::Parser do
       end
     end
 
-    it 'parses flags' do
-      %i|flag set|.each do |flag_alias|
-        expect("#{flag_alias}? CONSTANT").to be_param :flag, {
+    describe 'flags' do
+      it 'parses flags' do
+        %i|flag set|.each do |flag_alias|
+          expect("#{flag_alias}? CONSTANT").to be_param :flag, {
+            check: { type: :constant, value: 'CONSTANT' },
+            inverse: false,
+          }
+        end
+      end
+      
+      it 'parses inverse flags' do
+        expect('unset? CONSTANT').to be_param :flag, {
           check: { type: :constant, value: 'CONSTANT' },
-          inverse: false,
+          inverse: true,
         }
       end
 
-      expect('unset? CONSTANT').to be_param :flag, {
-        check: { type: :constant, value: 'CONSTANT' },
-        inverse: true,
-      }
+      it 'does not allow nonsensical flag constant types' do
+        expect { parse('flag? 1') }.to raise_error(RuntimeError)
+      end
+    end
+  end
+
+  describe 'variables' do
+    it 'can lookup variables' do
+      expect(':hello').to be_param :string, 'world',
+        VariableDeclarations.new(hello: '"world"')
+    end
+
+    it 'errors on missing variables' do
+      expect(':unknown').to be_param :string, 'world',
+        VariableDeclarations.new
+    end
+
+    it 'errors on any variables when using the null object' do
+      expect { parse(':unknown') }.to raise_error(RuntimeError)
     end
   end
 end

@@ -2,6 +2,7 @@ class Parser
   def initialize(program)
     @lines  = program.split(/\n/)
     @memory = Memory.new
+    @vars   = VariableDeclarations.new
   end
   
   def parse
@@ -16,6 +17,6 @@ class Parser
   attr_reader :lines, :memory
 
   def parse_line(text, number)
-    Line::Parser.new(text, number, memory).parse
+    Line::Parser.new(text, number, memory, vars).parse
   end
 end

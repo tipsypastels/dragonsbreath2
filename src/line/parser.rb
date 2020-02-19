@@ -2,10 +2,11 @@ class Line::Parser
   INDENT = '  '
   COMMENT = '#'
 
-  def initialize(text, number, memory)
+  def initialize(text, number, memory, vars)
     @text   = text.gsub(/#{COMMENT}\s*(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$).*$/, '')
     @number = number
     @memory = memory
+    @vars   = vars
   end
 
   def parse
@@ -14,6 +15,12 @@ class Line::Parser
     stripped_text = text
       .gsub(/^\s*/, '')
       .gsub(/\r$/, '')
+
+    if stripped_text.match(/declare ([a-z0-9_]+): (.*)/i)
+      vars.add($1, $2) and return
+    end
+
+    vars.at_start_of_file = false
 
     if stripped_text.match?(/^".*"$/)
       stripped_text = "say #{text}"
@@ -39,10 +46,10 @@ class Line::Parser
   private
 
   def parse_parameter(parameter)
-    Parameter::Parser.new(parameter).parse
+    Parameter::Parser.new(parameter, vars).parse
   end
   
-  attr_reader :text, :number, :memory
+  attr_reader :text, :number, :memory, :vars
 
   def indent
     @indent ||= begin
